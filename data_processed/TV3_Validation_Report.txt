@@ -1,0 +1,118 @@
+============================================================
+TV3 VALIDATION REPORT
+============================================================
+
+1. INPUT DATA
+------------------------------------------------------------
+Rows:
+120,421
+
+Unique students:
+15,235
+
+Courses:
+18
+
+Semesters:
+26
+
+Student-Course trajectories:
+101,965
+
+Trajectories >= 2 attempts:
+13,011
+
+Trajectories >= 3 attempts:
+3,372
+
+Trajectories >= 4 attempts:
+1,155
+
+
+2. ATTEMPT VALIDATION
+------------------------------------------------------------
+Attempt number mismatch rows:
+0
+
+
+3. FIRST FAILURE -> NEXT ATTEMPT
+------------------------------------------------------------
+First observed failures:
+22,248
+
+First failures with next observed attempt:
+12,058
+
+Complete score pairs:
+10,786
+
+Valid classification pairs:
+12,057
+
+
+4. RECOVERY OUTCOME
+------------------------------------------------------------
+Pass next attempt:
+6,545
+
+Not pass next attempt:
+5,512
+
+
+5. TIME GAP VALIDATION
+------------------------------------------------------------
+Time gap <= 0:
+0
+
+
+6. MISSING SCORE
+------------------------------------------------------------
+Initial failure score missing:
+1,238
+
+Next attempt score missing:
+1,231
+
+
+7. FAILURE TYPE DISTRIBUTION
+------------------------------------------------------------
+initial_failure_type
+FAIL_ACADEMIC      9141
+FAIL_ATTENDANCE    2672
+SUSPENDED           245
+
+
+8. NEXT STATUS DISTRIBUTION
+------------------------------------------------------------
+next_status_group
+PASS               6545
+FAIL_ACADEMIC      3418
+FAIL_ATTENDANCE    2026
+SUSPENDED            68
+EXEMPT                1
+
+
+9. LEAKAGE CHECK
+------------------------------------------------------------
+Do NOT use these as predictors:
+- next_attempt_total
+- next_status_group
+- score_delta
+- pass_next_attempt
+- future total attempts
+
+Potential pre-outcome features:
+- initial_failure_total
+- initial_failure_type
+- prior_attempt_count
+- course_id
+- time information known before outcome
+
+
+10. MANUAL CHECK
+------------------------------------------------------------
+A random sample of 30 retake pairs was exported to:
+
+TV3_Manual_Check_Sample.csv
+
+Please manually compare these rows with the original trajectory.
