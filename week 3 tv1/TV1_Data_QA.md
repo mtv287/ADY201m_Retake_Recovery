@@ -1,7 +1,6 @@
 # TV1 Week 3 - Data QA Summary
 
 **Project:** Retake Behavior & Recovery Analysis  
-**Member:** Trần Đại Hữu (TV1 / Team Leader)  
 **Data used:** `data_processed/master_sql_ready.csv` / SQL view `dbo.v_attempts`  
 **Week 3 status:** TV1 data QA completed; dataset can be used for EDA and model preparation, subject to the cautions below.
 
