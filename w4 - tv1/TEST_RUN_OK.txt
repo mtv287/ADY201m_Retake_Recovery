@@ -1,0 +1,8 @@
+Validation performed in ChatGPT container
+- TV1_Regression_Master.py: PASS
+- TV1_Regression_Master.ipynb Run All: PASS
+- model_ready_v1.csv rows: 10,786
+- student overlap train/test: 0
+- baseline + 5 regression models: PASS
+- 5-fold GroupKFold: PASS
+- Ridge GridSearchCV: PASS

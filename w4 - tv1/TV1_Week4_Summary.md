@@ -75,7 +75,14 @@ Trong lần chạy tham chiếu này, **Gradient Boosting** có Test RMSE thấp
 - `Regression_Results.csv`
 - `Regression_Results_MASTER.csv`
 - `Ridge_Tuning_Results.csv`
-- `model_ready_v1_TV1_fallback.csv`
+- `model_ready_v1.csv` (generated from `data_processed/retake_pairs_v1.csv`)
 - `TV1_Data_Leakage_Check.md`
 - `Week4_Group_Checklist.md`
 - `figures/`
+
+
+## 9. Fixes added in corrected version
+- Added `requirements.txt` and `INSTALL_WEEK4.bat` for missing `sklearn`.
+- Fixed dataset path logic; no longer looks for nonexistent `model_ready_v1_TV1_fallback.csv`.
+- Notebook outputs/errors were cleared.
+- Added a guard so the chart explains that `results_df` must be created first instead of raising a confusing NameError.
