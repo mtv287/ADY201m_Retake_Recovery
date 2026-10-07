@@ -1,0 +1,42 @@
+=== BÁO CÁO DATA CLEANING & QA (TV2) ===
+
+1. DUPLICATE AUDIT
+- Valid rows trong master_raw.csv: 125,349
+- Duplicate key: course_id + student_id + semester
+- Extra duplicate candidate rows: 4,928
+- Tổng rows nằm trong duplicate groups: 9,855
+- Candidate rows sau dedup: 120,421
+- master_raw.csv được giữ nguyên; duplicate chỉ được flag/review.
+
+2. MISSING VALUES
+- total_score missing trong master_raw: 11,155
+- total_score missing trong clean_attempts_v1: 10,972
+- Không impute mean/median ở Week 2.
+
+3. STATUS NORMALIZATION
+- Passed: 89,347
+- Not Passed: 20,972
+- Attendance Fail: 9,564
+- Is Suspended: 483
+- Is Exempt: 54
+- REVIEW_STATUS: 1
+
+Status groups:
+- PASS: 89,347
+- FAIL_ACADEMIC: 20,972
+- FAIL_ATTENDANCE: 9,564
+- SUSPENDED: 483
+- EXEMPT: 54
+- REVIEW: 1
+- REVIEW phải kiểm tra thủ công trước khi đưa vào recovery analysis.
+
+4. QA SUMMARY FOR TV3
+- Clean rows: 120,421
+- Unique students: 15,235
+- Decoded course codes: 18
+- Unique semesters: 26
+- Semester range: SP2017 -> SU2025
+- Student-Course trajectories: 101,965
+- Trajectories >=2 attempts: 13,011
+- Trajectories >=3 attempts: 3,372
+- Trajectories >=4 attempts: 1,155
