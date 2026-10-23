@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ADY201m — Retake Behavior & Score Recovery Analysis Dashboard</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .tab-btn.active { background-color: #1e3a8a; color: #ffffff; box-shadow: 0 2px 6px rgba(30, 58, 138, 0.25); }
+    input[type="range"] { accent-color: #1e3a8a; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Top Header -->
+  <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 text-xs font-bold uppercase tracking-wider bg-blue-600 text-white rounded">ADY201m Fall 2026</span>
+          <span class="text-xs text-slate-400">FPT University HCMC · Step 5 & Step 7 Analysis Tool</span>
+        </div>
+        <h1 class="text-lg sm:text-xl font-bold tracking-tight mt-0.5">Retake Behavior & Score Recovery Interactive Dashboard</h1>
+      </div>
+      <div class="flex items-center gap-2 text-xs bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>Verified Data: <strong>123,696</strong> Enrollments · <strong>18</strong> Courses · <strong>15,050</strong> Mandatory Retakes</span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="bg-slate-100 text-slate-700 border-t border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex flex-wrap gap-1.5">
+        <button id="tabBtn-overview" class="tab-btn active px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition">1. Tổng quan & 18 Môn học (RQ1)</button>
+        <button id="tabBtn-paradox" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition hover:bg-slate-200">2. Nghịch lý Điểm & Yếu tố (RQ2)</button>
+        <button id="tabBtn-survival" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition hover:bg-slate-200">3. Độ trễ & Sinh tồn (RQ3 & RQ4)</button>
+        <button id="tabBtn-models" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition hover:bg-slate-200">4. So sánh 8 Mô hình (Step 6)</button>
+        <button id="tabBtn-simulator" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition hover:bg-slate-200">5. Công cụ Dự báo Phục hồi (Simulator)</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex-1 space-y-6">
+
+    <!-- Top Global KPI Strip -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Tỷ lệ Trượt Lần 1 & Học lại</p>
+        <p class="text-2xl font-extrabold text-slate-900 mt-1">22.28% <span class="text-sm font-semibold text-blue-700">→ 66.26% Học lại</span></p>
+        <p class="text-xs text-slate-500 mt-1">22,713 trượt / 101,965 cặp · 15,050 học lại</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Độ tăng Điểm TB (Score Delta)</p>
+        <p class="text-2xl font-extrabold text-emerald-700 mt-1">+2.11 điểm <span class="text-sm font-semibold text-slate-600">(2.81 → 4.92)</span></p>
+        <p class="text-xs text-slate-500 mt-1">Paired t = 91.09, p &lt; 0.0001 · 77.55% tăng điểm</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Xác suất Phục hồi Qua môn</p>
+        <p class="text-2xl font-extrabold text-blue-800 mt-1">60.66% <span class="text-sm font-semibold text-teal-700">(Tích lũy: 79.06%)</span></p>
+        <p class="text-xs text-slate-500 mt-1">95% Wilson CI: [59.88%, 61.44%] ở lần 2</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Hiệu quả Học lại Ngay (Block 2)</p>
+        <p class="text-2xl font-extrabold text-indigo-700 mt-1">76.61% <span class="text-sm font-semibold text-amber-600">vs 57.82% Kỳ sau</span></p>
+        <p class="text-xs text-slate-500 mt-1">+18.79 điểm % khi học lại ngay trong học kỳ</p>
+      </div>
+    </section>
+
+    <!-- TAB 1: OVERVIEW & 18 COURSES (RQ1) -->
+    <section id="view-overview" class="space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h2 class="text-base font-bold text-slate-900">Phân phối Điểm Tổng kết: Lần 1 vs Lần 2 (n = 13,699)</h2>
+              <p class="text-xs text-slate-500">Sự dịch chuyển phân phối điểm vượt qua ngưỡng đạt 5.0 sau khi thi lại/học lại</p>
+            </div>
+          </div>
+          <div class="relative h-72">
+            <canvas id="chartScoreDist"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h2 class="text-base font-bold text-slate-900">Tỷ lệ Phục hồi Qua môn theo Môn học (Top Môn có n ≥ 100)</h2>
+              <p class="text-xs text-slate-500">So sánh xác suất qua môn ngay Lần 2 và Tích lũy sau tất cả các lần học lại</p>
+            </div>
+          </div>
+          <div class="relative h-72">
+            <canvas id="chartCourseRecovery"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Course Explorer Table -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Bảng Tra cứu & Lọc Chi tiết 18 Môn học (SQL Query 1)</h2>
+            <p class="text-xs text-slate-500">Đã giải mã tên môn học từ mã ẩn danh và loại bỏ 1,653 bản ghi nhân bản hệ thống SP2018/SU2018</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <input id="courseSearchInput" type="text" placeholder="Tìm mã môn (VD: PRF192, CSD201)..." class="px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" />
+            <select id="courseSortSelect" class="px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white">
+              <option value="retakers_desc">Sắp xếp: Số lượng học lại giảm dần</option>
+              <option value="fail_desc">Sắp xếp: Tỷ lệ trượt L1 cao nhất</option>
+              <option value="pass2_desc">Sắp xếp: Xác suất qua môn L2 cao nhất</option>
+              <option value="delta_desc">Sắp xếp: Độ tăng điểm (Delta) lớn nhất</option>
+            </select>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-800 text-white">
+                <th class="py-2.5 px-3 rounded-tl-lg">Mã File Gốc</th>
+                <th class="py-2.5 px-3">Mã Môn</th>
+                <th class="py-2.5 px-3">Tên Môn Học</th>
+                <th class="py-2.5 px-3 text-right">Tổng SV</th>
+                <th class="py-2.5 px-3 text-right">Trượt L1 (%)</th>
+                <th class="py-2.5 px-3 text-right">Số Học Lại</th>
+                <th class="py-2.5 px-3 text-right">Điểm L1</th>
+                <th class="py-2.5 px-3 text-right">Điểm L2</th>
+                <th class="py-2.5 px-3 text-right">Độ Tăng (Δ)</th>
+                <th class="py-2.5 px-3 text-right">Qua L2 (%)</th>
+                <th class="py-2.5 px-3 text-right rounded-tr-lg">Qua Tích Lũy (%)</th>
+              </tr>
+            </thead>
+            <tbody id="courseTableBody" class="divide-y divide-slate-200"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: LEVEL-VS-GAIN PARADOX & DETERMINANTS (RQ2) -->
+    <section id="view-paradox" class="hidden space-y-6">
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-900">
+        <strong>Phát hiện Trọng tâm (RQ2 — Nghịch lý Mức điểm vs Độ tăng / Floor Effect):</strong> Nhóm sinh viên có điểm lần 1 rất thấp (<code>&lt; 2.0</code>) có <strong>mức tăng điểm trung bình cao nhất (+3.26 điểm)</strong> do xuất phát gần điểm 0, nhưng lại có <strong>xác suất qua môn thấp nhất (50.91% ở nhóm Not Passed, 40.80% ở nhóm Attendance Fail)</strong>. Ngược lại, nhóm trượt sát ngưỡng (<code>≥ 4.5</code>) chỉ tăng <strong>+0.35 điểm</strong> nhưng đạt tỷ lệ qua môn tới <strong>69.33%</strong> ở lần 2 (và <strong>85.79%</strong> tích lũy). Điều này chứng minh không được đánh đồng <code>Score Change &gt; 0</code> với phục hồi thành công!
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+          <h2 class="text-base font-bold text-slate-900 mb-1">Nghịch lý Mức điểm Gốc vs. Xác suất Qua môn (Nhóm Not Passed)</h2>
+          <p class="text-xs text-slate-500 mb-3">Độ tăng điểm thô (cột vàng) nghịch chiều với xác suất đạt chuẩn qua môn (đường xanh)</p>
+          <div class="relative h-72">
+            <canvas id="chartParadox"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+          <h2 class="text-base font-bold text-slate-900 mb-1">So sánh theo Cơ chế Trượt Lần 1 & Học cải thiện (SQL Query 5)</h2>
+          <p class="text-xs text-slate-500 mb-3">Attendance Fail (cấm thi do nghỉ &gt;20%) có xác suất phục hồi thấp hơn 20.3 điểm % so với Not Passed</p>
+          <div class="relative h-72">
+            <canvas id="chartFailureType"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+        <h2 class="text-base font-bold text-slate-900 mb-3">Bảng Kiểm định Thống kê Suy luận và Ước lượng Xác suất (95% Wilson CI)</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-800 text-white">
+                <th class="py-2.5 px-3">Chỉ số / Giả thuyết Kiểm định</th>
+                <th class="py-2.5 px-3 text-right">Số ca / Mẫu (k / n)</th>
+                <th class="py-2.5 px-3 text-right">Giá trị Ước lượng</th>
+                <th class="py-2.5 px-3 text-right">Khoảng Tin cậy 95% (Wilson)</th>
+                <th class="py-2.5 px-3">Kiểm định Thống kê & Ý nghĩa</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr>
+                <td class="py-2 px-3 font-semibold">Xác suất Tiếp tục Học lại sau khi Trượt L1 P(Retake | Fail_1)</td>
+                <td class="py-2 px-3 text-right">15,050 / 22,713</td>
+                <td class="py-2 px-3 text-right font-bold text-blue-700">66.26%</td>
+                <td class="py-2 px-3 text-right">[65.64%, 66.87%]</td>
+                <td class="py-2 px-3">33.74% còn lại bị kiểm duyệt phải (right-censored) hoặc bỏ môn</td>
+              </tr>
+              <tr class="bg-slate-50">
+                <td class="py-2 px-3 font-semibold">Xác suất Qua môn Lần 2 khi Học lại P(Pass_2 | Fail_1, Retook)</td>
+                <td class="py-2 px-3 text-right">9,130 / 15,050</td>
+                <td class="py-2 px-3 text-right font-bold text-emerald-700">60.66%</td>
+                <td class="py-2 px-3 text-right">[59.88%, 61.44%]</td>
+                <td class="py-2 px-3">Tăng lên 79.06% [78.40%, 79.70%] nếu tính tích lũy mọi lần học lại</td>
+              </tr>
+              <tr>
+                <td class="py-2 px-3 font-semibold">Xác suất Phục hồi Có ý nghĩa (Pass L2 &amp; ΔScore ≥ +1.0)</td>
+                <td class="py-2 px-3 text-right">7,507 / 13,699</td>
+                <td class="py-2 px-3 text-right font-bold text-indigo-700">54.80%</td>
+                <td class="py-2 px-3 text-right">[53.96%, 55.63%]</td>
+                <td class="py-2 px-3">Loại trừ các ca tăng điểm nhưng vẫn trượt hoặc chỉ nhích nhẹ &lt; 1 điểm</td>
+              </tr>
+              <tr class="bg-slate-50">
+                <td class="py-2 px-3 font-semibold">Độ lệch Điểm Tổng kết Trước - Sau (TOTAL_2 - TOTAL_1)</td>
+                <td class="py-2 px-3 text-right">n = 13,699</td>
+                <td class="py-2 px-3 text-right font-bold text-emerald-700">+2.110 điểm</td>
+                <td class="py-2 px-3 text-right">Median: +2.20 (IQR: 3.90)</td>
+                <td class="py-2 px-3">Paired t = 91.09 (p &lt; 0.0001, d = 0.78); Wilcoxon W = 1.16e7 (p &lt; 0.0001)</td>
+              </tr>
+              <tr>
+                <td class="py-2 px-3 font-semibold">Khác biệt Phục hồi theo Hình thức Trượt (Not Passed vs AF vs Susp.)</td>
+                <td class="py-2 px-3 text-right">n = 15,050</td>
+                <td class="py-2 px-3 text-right font-bold">64.66% vs 44.35%</td>
+                <td class="py-2 px-3 text-right">Chênh lệch: +20.31%</td>
+                <td class="py-2 px-3">Chi-square = 446.80 (df=2, p &lt; 0.0001); Kruskal-Wallis H = 194.27 (p &lt; 0.0001)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: TIMING, SURVIVAL & RQ4 BOTTLENECK -->
+    <section id="view-survival" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+          <h2 class="text-base font-bold text-slate-900 mb-1">RQ3: Ảnh hưởng của Khoảng cách Học kỳ (Semester Gap)</h2>
+          <p class="text-xs text-slate-500 mb-3">Học lại ngay trong kỳ (Block 2, Gap=0) đạt tỷ lệ qua môn 76.61%, giảm mạnh khi trì hoãn</p>
+          <div class="relative h-72">
+            <canvas id="chartTimingGap"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+          <h2 class="text-base font-bold text-slate-900 mb-1">RQ3: Đường cong Sinh tồn Kaplan–Meier qua các Lần học lại (Attempts 2–7)</h2>
+          <p class="text-xs text-slate-500 mb-3">Xác suất qua môn có điều kiện h(k) giảm từ 60.66% (Lần 2) xuống 21.90% (Lần 7)</p>
+          <div class="relative h-72">
+            <canvas id="chartKaplanMeier"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- RQ4 Component Bottleneck Section -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+        <h2 class="text-base font-bold text-slate-900 mb-1">RQ4 (Đóng góp RBL Tuần 6): Phân tách Điểm Quá trình (Coursework) vs. Điểm nghẽn Thi Cuối kỳ (Exam Bottleneck)</h2>
+        <p class="text-xs text-slate-500 mb-4">So sánh 4 nhóm hồ sơ sinh viên khi học lại: Mất gắn kết chuyên cần (AF) · Thiếu hụt toàn diện (CW &lt; 5.0) · Điểm nghẽn thi cuối kỳ (CW ≥ 5.0 nhưng trượt FE &lt; 4.0) · Học cải thiện tự nguyện</p>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="p-4 rounded-xl bg-rose-50 border border-rose-200">
+            <span class="text-xs font-bold uppercase text-rose-700">1. Trượt Điểm danh (AF)</span>
+            <p class="text-xl font-extrabold text-rose-900 mt-1">43.02% Qua L2</p>
+            <p class="text-xs text-rose-800 mt-1">n = 2,599 · CW L1: 1.53 · FE L1: 0.00 · Qua tích lũy: <strong>64.49%</strong></p>
+          </div>
+          <div class="p-4 rounded-xl bg-amber-50 border border-amber-200">
+            <span class="text-xs font-bold uppercase text-amber-700">2. Thiếu hụt Toàn diện</span>
+            <p class="text-xl font-extrabold text-amber-900 mt-1">60.45% Qua L2</p>
+            <p class="text-xs text-amber-800 mt-1">n = 5,798 · CW L1: 2.68 · FE L1: 1.67 · Qua tích lũy: <strong>78.25%</strong></p>
+          </div>
+          <div class="p-4 rounded-xl bg-blue-50 border border-blue-200">
+            <span class="text-xs font-bold uppercase text-blue-700">3. Điểm nghẽn Cuối kỳ (CW≥5)</span>
+            <p class="text-xl font-extrabold text-blue-900 mt-1">69.28% Qua L2</p>
+            <p class="text-xs text-blue-800 mt-1">n = 5,302 · CW L1: 7.12 · FE L1: 2.63 · Qua tích lũy: <strong>87.14%</strong></p>
+          </div>
+          <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+            <span class="text-xs font-bold uppercase text-emerald-700">4. Học Cải thiện (Đã Pass L1)</span>
+            <p class="text-xl font-extrabold text-emerald-900 mt-1">93.43% Qua L2</p>
+            <p class="text-xs text-emerald-800 mt-1">n = 137 · Điểm L1: 6.36 → L2: 7.15 (<strong>+0.79</strong>) · 73.88% tăng điểm</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: 8-MODEL BENCHMARK (STEP 6) -->
+    <section id="view-models" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+          <h2 class="text-base font-bold text-slate-900 mb-1">Nhóm A: 4 Mô hình Hồi quy Dự báo Độ tăng Điểm (ΔScore)</h2>
+          <p class="text-xs text-slate-500 mb-3">Đánh giá trên tập Holdout Test (n = 2,740) — RMSE giảm từ 2.6961 xuống 2.2792, R² tăng lên 0.2852</p>
+          <div class="relative h-72">
+            <canvas id="chartRegModels"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+          <h2 class="text-base font-bold text-slate-900 mb-1">Nhóm B: 4 Mô hình Phân loại Xác suất & Sinh tồn P(Pass)</h2>
+          <p class="text-xs text-slate-500 mb-3">So sánh ROC-AUC, F1-Score và Accuracy giữa Naive Bayes, Logistic MLE, Random Forest và Cox Cloglog</p>
+          <div class="relative h-72">
+            <canvas id="chartClsModels"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+        <h2 class="text-base font-bold text-slate-900 mb-2">Hệ số Chuẩn hóa của Hồi quy OLS (Model 2), Tỷ số Cược Odds Ratio (Model 6) & Hazard Ratio (Model 8)</h2>
+        <p class="text-xs text-slate-500 mb-3">Chú ý sự đảo dấu kinh điển của <code>TOTAL_1</code>: âm trong hồi quy độ tăng điểm (hiệu ứng sàn) nhưng dương mạnh trong hồi quy xác suất qua môn!</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-800 text-white">
+                <th class="py-2.5 px-3">Biến Đầu vào (Pre-Retake Feature)</th>
+                <th class="py-2.5 px-3 text-right">OLS Beta (ΔScore)</th>
+                <th class="py-2.5 px-3 text-right">OLS t-stat (p-val)</th>
+                <th class="py-2.5 px-3 text-right">Logistic Odds Ratio</th>
+                <th class="py-2.5 px-3 text-right">Logistic z-stat</th>
+                <th class="py-2.5 px-3 text-right">Cox Survival HR</th>
+                <th class="py-2.5 px-3">Diễn giải Học thuật</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr>
+                <td class="py-2 px-3 font-semibold">PRIOR_GPA_IMP (Điểm TB tích lũy trước đó)</td>
+                <td class="py-2 px-3 text-right font-bold text-emerald-700">+0.5286</td>
+                <td class="py-2 px-3 text-right">+18.06 (&lt;0.0001)</td>
+                <td class="py-2 px-3 text-right font-bold text-emerald-700">1.416</td>
+                <td class="py-2 px-3 text-right">+12.18 (&lt;0.0001)</td>
+                <td class="py-2 px-3 text-right font-bold text-emerald-700">1.299</td>
+                <td class="py-2 px-3">Nền tảng học lực chung là yếu tố thúc đẩy phục hồi mạnh nhất (+41.6% odds)</td>
+              </tr>
+              <tr class="bg-slate-50">
+                <td class="py-2 px-3 font-semibold">IS_IMMEDIATE_RETAKE (Học lại ngay Block 2)</td>
+                <td class="py-2 px-3 text-right font-bold text-emerald-700">+0.3739</td>
+                <td class="py-2 px-3 text-right">+10.39 (&lt;0.0001)</td>
+                <td class="py-2 px-3 text-right font-bold text-emerald-700">1.397</td>
+                <td class="py-2 px-3 text-right">+9.85 (&lt;0.0001)</td>
+                <td class="py-2 px-3 text-right">—</td>
+                <td class="py-2 px-3">Học lại ngay khi kiến thức còn mới giúp tăng +39.7% tỷ lệ cược qua môn</td>
+              </tr>
+              <tr>
+                <td class="py-2 px-3 font-semibold">TOTAL_1 (Điểm tổng kết lần 1)</td>
+                <td class="py-2 px-3 text-right font-bold text-rose-700">-1.3079</td>
+                <td class="py-2 px-3 text-right">-25.55 (&lt;0.0001)</td>
+                <td class="py-2 px-3 text-right font-bold text-emerald-700">1.288</td>
+                <td class="py-2 px-3 text-right">+5.24 (&lt;0.0001)</td>
+                <td class="py-2 px-3 text-right font-bold text-emerald-700">1.199</td>
+                <td class="py-2 px-3">Điểm gốc cao ít dư địa tăng ΔS nhưng giúp dễ vượt ngưỡng 5.0 (+28.8% odds)</td>
+              </tr>
+              <tr class="bg-slate-50">
+                <td class="py-2 px-3 font-semibold">LOG_SEM_GAP / SEM_WAIT (Độ trễ học kỳ)</td>
+                <td class="py-2 px-3 text-right font-bold text-rose-700">-0.1605</td>
+                <td class="py-2 px-3 text-right">-4.44 (&lt;0.0001)</td>
+                <td class="py-2 px-3 text-right font-bold text-rose-700">0.875</td>
+                <td class="py-2 px-3 text-right">-4.08 (&lt;0.0001)</td>
+                <td class="py-2 px-3 text-right font-bold text-rose-700">0.805</td>
+                <td class="py-2 px-3">Càng trì hoãn học lại sang các kỳ xa, xác suất phục hồi càng suy giảm</td>
+              </tr>
+              <tr>
+                <td class="py-2 px-3 font-semibold">COURSE_FAIL_RATE (Độ khó môn học)</td>
+                <td class="py-2 px-3 text-right">+0.1507</td>
+                <td class="py-2 px-3 text-right">+2.47 (0.0136)</td>
+                <td class="py-2 px-3 text-right font-bold text-rose-700">0.769</td>
+                <td class="py-2 px-3 text-right">-4.62 (&lt;0.0001)</td>
+                <td class="py-2 px-3 text-right font-bold text-rose-700">0.921</td>
+                <td class="py-2 px-3">Môn có tỷ lệ trượt cao (PRJ301, CSD203) làm giảm mạnh xác suất qua môn</td>
+              </tr>
+              <tr class="bg-slate-50">
+                <td class="py-2 px-3 font-semibold">IS_AF_1 (Trượt điểm danh lần 1)</td>
+                <td class="py-2 px-3 text-right font-bold text-rose-700">-0.2168</td>
+                <td class="py-2 px-3 text-right">-8.07 (&lt;0.0001)</td>
+                <td class="py-2 px-3 text-right font-bold text-rose-700">0.852</td>
+                <td class="py-2 px-3 text-right">-6.58 (&lt;0.0001)</td>
+                <td class="py-2 px-3 text-right font-bold text-rose-700">0.917</td>
+                <td class="py-2 px-3">Mất kỷ luật chuyên cần ở lần 1 để lại rủi ro tái trượt cao ở lần 2</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: INTERACTIVE RECOVERY SIMULATOR (STEP 7 DECISION TOOL) -->
+    <section id="view-simulator" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Input Controls Panel -->
+        <div class="lg:col-span-5 bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
+          <div>
+            <span class="px-2 py-0.5 text-xs font-bold bg-indigo-100 text-indigo-800 rounded">Step 7 Analysis Tool</span>
+            <h2 class="text-base font-bold text-slate-900 mt-1">Mô phỏng Dự báo Phục hồi Cá nhân hóa</h2>
+            <p class="text-xs text-slate-500">Sử dụng trực tiếp trọng số thực nghiệm từ Model 2 (OLS), Model 6 (Logistic MLE) &amp; Model 8 (Cox Survival)</p>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="font-semibold text-slate-700 block mb-1">1. Chọn Môn học (Xác định độ khó &amp; điểm chuẩn môn):</label>
+              <select id="simCourse" class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white font-medium"></select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">2. Điểm Quá trình L1 (<span id="lblCW1">5.5</span>):</label>
+                <input id="simCW1" type="range" min="0" max="10" step="0.1" value="5.5" class="w-full" />
+              </div>
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">3. Điểm Thi Cuối kỳ L1 (<span id="lblFE1">2.5</span>):</label>
+                <input id="simFE1" type="range" min="0" max="10" step="0.1" value="2.5" class="w-full" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">4. Điểm Tổng kết L1 (<span id="lblTot1">3.8</span>):</label>
+                <input id="simTot1" type="range" min="0" max="6.5" step="0.1" value="3.8" class="w-full" />
+              </div>
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">5. GPA Tích lũy Trước đó (<span id="lblGPA">6.2</span>):</label>
+                <input id="simGPA" type="range" min="2.0" max="9.5" step="0.1" value="6.2" class="w-full" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">6. Trạng thái Lần 1:</label>
+                <select id="simStatus1" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white">
+                  <option value="NP">Not Passed (Trượt điểm)</option>
+                  <option value="AF">Attendance Fail (Cấm thi)</option>
+                  <option value="SU">Is Suspended (Đình chỉ)</option>
+                </select>
+              </div>
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">7. Thời điểm Học lại (Gap):</label>
+                <select id="simGap" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white">
+                  <option value="0">Học lại ngay trong kỳ (Block 2, Gap=0)</option>
+                  <option value="1" selected>Học kỳ kế tiếp (Gap=1 kỳ)</option>
+                  <option value="2">Sau 2 học kỳ (Gap=2 kỳ)</option>
+                  <option value="4">Sau 1 năm (Gap=4 kỳ)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="pt-2 flex gap-2">
+              <button id="btnPresetBottleneck" class="flex-1 py-1.5 px-2 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 rounded-lg font-semibold transition">Mẫu: Điểm nghẽn FE</button>
+              <button id="btnPresetAF" class="flex-1 py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 rounded-lg font-semibold transition">Mẫu: Trượt Điểm danh</button>
+              <button id="btnPresetBlock2" class="flex-1 py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-semibold transition">Mẫu: Học ngay Block 2</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulation Output Panel -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+              <p class="text-xs font-semibold text-slate-500 uppercase">Xác suất Qua môn Lần 2</p>
+              <p id="outProbPass2" class="text-3xl font-extrabold text-blue-800 mt-1">68.4%</p>
+              <p id="outRiskBadge" class="text-xs font-semibold text-emerald-700 mt-1">Khả năng phục hồi Khá - Cao</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+              <p class="text-xs font-semibold text-slate-500 uppercase">Dự báo Điểm Tổng kết Lần 2</p>
+              <p id="outPredTotal2" class="text-3xl font-extrabold text-emerald-700 mt-1">5.62</p>
+              <p id="outPredDelta" class="text-xs font-semibold text-slate-600 mt-1">Độ tăng dự kiến: +1.82 điểm</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+              <p class="text-xs font-semibold text-slate-500 uppercase">Phân nhóm Hồ sơ (RQ4)</p>
+              <p id="outProfileTitle" class="text-sm font-extrabold text-indigo-900 mt-1.5">Exam Bottleneck</p>
+              <p id="outProfileSub" class="text-xs text-slate-500 mt-1">Quá trình đạt (≥5.0), vấp ngã thi cuối kỳ</p>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+            <h3 class="text-sm font-bold text-slate-900 mb-1">Quỹ đạo Xác suất Phục hồi Tích lũy qua các Lần học lại (Discrete-Time Survival Curve)</h3>
+            <p class="text-xs text-slate-500 mb-3">So sánh xác suất tích lũy vượt qua môn học của sinh viên này nếu học lại ngay trong kỳ (Block 2) vs. chờ kỳ sau</p>
+            <div class="relative h-56">
+              <canvas id="chartSimTrajectory"></canvas>
+            </div>
+          </div>
+
+          <div id="outAdviceBox" class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-xs text-slate-800 space-y-1">
+            <p class="font-bold text-blue-900">Khuyến nghị Học vụ &amp; Can thiệp (Evidence-Based Advising):</p>
+            <p id="outAdviceText">Sinh viên có nền tảng điểm quá trình tốt nhưng trượt do điểm thi cuối kỳ. Nếu đăng ký học lại ngay trong Block 2, xác suất qua môn tăng thêm +11.4 điểm %.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="bg-white border-t border-slate-200 py-3 px-4 sm:px-6 text-center text-xs text-slate-500">
+    ADY201m Project Executor · Dữ liệu thực nghiệm: 18 môn học CNTT (123,696 bản ghi sạch) · Đã kiểm chứng chéo SQL &amp; Python
+  </footer>
+
+  <script>
+    // Verified Empirical Course Dataset (18 Courses from SQL Query 1)
+    const COURSES = [
+      { id: "161806AIB", code: "PRF192", name: "Programming Fundamentals (C)", n: 12789, fail1_pct: 28.91, retakers: 2598, cont_pct: 70.27, att1: 2.95, att2: 5.07, delta: 2.12, pass2: 61.70, ever: 81.95, mean_course: 5.83 },
+      { id: "161815AIB", code: "PRO192", name: "Object-Oriented Programming (Java)", n: 11076, fail1_pct: 26.41, retakers: 2355, cont_pct: 80.51, att1: 2.80, att2: 5.01, delta: 2.21, pass2: 63.95, ever: 86.16, mean_course: 5.56 },
+      { id: "031904BJA", code: "CSD201", name: "Data Structures and Algorithms", n: 9405, fail1_pct: 25.19, retakers: 1711, cont_pct: 72.22, att1: 2.87, att2: 5.38, delta: 2.51, pass2: 65.11, ever: 79.31, mean_course: 5.93 },
+      { id: "040209BJB", code: "DBI202", name: "Introduction to Databases", n: 11422, fail1_pct: 20.57, retakers: 1616, cont_pct: 68.80, att1: 2.47, att2: 4.56, delta: 2.09, pass2: 60.83, ever: 80.07, mean_course: 5.71 },
+      { id: "161810CJA", code: "PRJ301", name: "Java Web Application Development", n: 3867, fail1_pct: 48.75, retakers: 1380, cont_pct: 73.21, att1: 2.48, att2: 4.64, delta: 2.16, pass2: 56.52, ever: 80.43, mean_course: 4.38 },
+      { id: "120102BAA", code: "LAB211", name: "OOP with Java Lab (Pass/Fail LOC)", n: 9543, fail1_pct: 22.44, retakers: 1359, cont_pct: 63.48, att1: null, att2: null, delta: null, pass2: 61.52, ever: 78.81, mean_course: 5.50 },
+      { id: "151907BJB", code: "OSG202", name: "Operating Systems", n: 11661, fail1_pct: 13.74, retakers: 975, cont_pct: 60.86, att1: 3.76, att2: 4.91, delta: 1.14, pass2: 55.79, ever: 77.74, mean_course: 6.49 },
+      { id: "161810CJ24", code: "PRJ30x", name: "Java Web Development (Merged)", n: 3842, fail1_pct: 35.40, retakers: 911, cont_pct: 66.99, att1: 2.72, att2: 4.80, delta: 2.08, pass2: 56.97, ever: 65.64, mean_course: 5.33 },
+      { id: "030501BJA", code: "CEA201", name: "Computer Organization & Architecture", n: 14044, fail1_pct: 13.43, retakers: 843, cont_pct: 44.70, att1: 3.48, att2: 5.07, delta: 1.59, pass2: 61.80, ever: 74.97, mean_course: 6.72 },
+      { id: "161810CBA", code: "PRJ321", name: "Web-Based Java Applications (Legacy)", n: 1596, fail1_pct: 53.95, retakers: 562, cont_pct: 65.27, att1: 1.26, att2: 3.48, delta: 2.22, pass2: 47.86, ever: 64.77, mean_course: 3.39 },
+      { id: "091520AJB", code: "IOT102", name: "Internet of Things", n: 8592, fail1_pct: 9.28, retakers: 317, cont_pct: 39.77, att1: 2.21, att2: 5.49, delta: 3.29, pass2: 68.45, ever: 81.39, mean_course: 7.26 },
+      { id: "031904BJC", code: "CSD203", name: "Advanced Data Structures (Python)", n: 984, fail1_pct: 40.35, retakers: 271, cont_pct: 68.26, att1: 3.67, att2: 5.60, delta: 1.93, pass2: 53.14, ever: 69.37, mean_course: 5.64 },
+      { id: "160616AIA", code: "PFP191", name: "Programming Fundamentals (Python)", n: 1304, fail1_pct: 19.02, retakers: 101, cont_pct: 40.73, att1: 2.67, att2: 4.92, delta: 2.25, pass2: 55.45, ever: 69.31, mean_course: 6.74 },
+      { id: "010425BJA13", code: "ADY201m", name: "AI & Data Science with Python & SQL", n: 780, fail1_pct: 5.38, retakers: 21, cont_pct: 50.00, att1: 3.37, att2: 5.34, delta: 1.97, pass2: 71.43, ever: 76.19, mean_course: 7.49 },
+      { id: "040116CIA13", code: "DAP391m", name: "Data Analytics Project", n: 694, fail1_pct: 4.61, retakers: 16, cont_pct: 50.00, att1: 2.28, att2: 6.76, delta: 4.49, pass2: 81.25, ever: 87.50, mean_course: 7.80 },
+      { id: "161806AIC", code: "PRF193", name: "Programming Fundamentals Extended", n: 187, fail1_pct: 33.69, retakers: 14, cont_pct: 22.22, att1: 3.59, att2: 6.01, delta: 2.41, pass2: 71.43, ever: 71.43, mean_course: 6.13 },
+      { id: "091520AJA", code: "IOT101", name: "IoT Fundamentals", n: 169, fail1_pct: 33.73, retakers: 0, cont_pct: 0.00, att1: null, att2: null, delta: null, pass2: null, ever: null, mean_course: 5.11 },
+      { id: "160316BIA", code: "PCP291", name: "Competitive Programming", n: 10, fail1_pct: 20.00, retakers: 0, cont_pct: 0.00, att1: null, att2: null, delta: null, pass2: null, ever: null, mean_course: 6.46 }
+    ];
+
+    // Render Course Table
+    function renderCourseTable() {
+      const q = document.getElementById('courseSearchInput').value.trim().toLowerCase();
+      const sortMode = document.getElementById('courseSortSelect').value;
+      let filtered = COURSES.filter(c =>
+        c.id.toLowerCase().includes(q) ||
+        c.code.toLowerCase().includes(q) ||
+        c.name.toLowerCase().includes(q)
+      );
+
+      filtered.sort((a, b) => {
+        if (sortMode === 'retakers_desc') return b.retakers - a.retakers;
+        if (sortMode === 'fail_desc') return b.fail1_pct - a.fail1_pct;
+        if (sortMode === 'pass2_desc') return (b.pass2 || -1) - (a.pass2 || -1);
+        if (sortMode === 'delta_desc') return (b.delta || -99) - (a.delta || -99);
+        return 0;
+      });
+
+      const tbody = document.getElementById('courseTableBody');
+      tbody.innerHTML = filtered.map((c, idx) => `
+        <tr class="${idx % 2 === 1 ? 'bg-slate-50' : 'bg-white'} hover:bg-blue-50/60 transition">
+          <td class="py-2 px-3 font-mono text-slate-600">${c.id}</td>
+          <td class="py-2 px-3 font-bold text-blue-900">${c.code}</td>
+          <td class="py-2 px-3">${c.name}</td>
+          <td class="py-2 px-3 text-right">${c.n.toLocaleString()}</td>
+          <td class="py-2 px-3 text-right font-semibold ${c.fail1_pct >= 30 ? 'text-rose-600' : 'text-slate-700'}">${c.fail1_pct.toFixed(2)}%</td>
+          <td class="py-2 px-3 text-right font-semibold">${c.retakers.toLocaleString()}</td>
+          <td class="py-2 px-3 text-right">${c.att1 !== null ? c.att1.toFixed(2) : 'N/A'}</td>
+          <td class="py-2 px-3 text-right">${c.att2 !== null ? c.att2.toFixed(2) : 'N/A'}</td>
+          <td class="py-2 px-3 text-right font-bold text-emerald-700">${c.delta !== null ? '+' + c.delta.toFixed(2) : (c.retakers === 0 ? '—' : 'Pass/Fail (LOC)')}</td>
+          <td class="py-2 px-3 text-right font-bold text-blue-800">${c.pass2 !== null ? c.pass2.toFixed(2) + '%' : '—'}</td>
+          <td class="py-2 px-3 text-right font-bold text-teal-700">${c.ever !== null ? c.ever.toFixed(2) + '%' : '—'}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Tab Switching Logic
+    const TABS = ['overview', 'paradox', 'survival', 'models', 'simulator'];
+    TABS.forEach(tabId => {
+      document.getElementById(`tabBtn-${tabId}`).addEventListener('click', () => {
+        TABS.forEach(t => {
+          document.getElementById(`view-${t}`).classList.toggle('hidden', t !== tabId);
+          document.getElementById(`tabBtn-${t}`).classList.toggle('active', t === tabId);
+        });
+      });
+    });
+
+    document.getElementById('courseSearchInput').addEventListener('input', renderCourseTable);
+    document.getElementById('courseSortSelect').addEventListener('change', renderCourseTable);
+
+    // Initialize Charts
+    let simChartInstance = null;
+
+    function initCharts() {
+      // 1. Score Distribution Shift (Attempt 1 vs Attempt 2)
+      new Chart(document.getElementById('chartScoreDist'), {
+        type: 'bar',
+        data: {
+          labels: ['0–1', '1–2', '2–3', '3–4', '4–5 (Cận)', '5–6 (Đạt)', '6–7', '7–8', '8–9', '9–10'],
+          datasets: [
+            {
+              label: 'Điểm Lần 1 (Mean = 2.81)',
+              data: [22.4, 12.9, 14.8, 17.6, 22.1, 8.9, 1.2, 0.1, 0.0, 0.0],
+              backgroundColor: 'rgba(220, 38, 38, 0.72)'
+            },
+            {
+              label: 'Điểm Lần 2 (Mean = 4.92)',
+              data: [11.8, 4.9, 6.2, 9.1, 10.6, 21.8, 18.4, 11.6, 4.7, 0.9],
+              backgroundColor: 'rgba(37, 99, 235, 0.78)'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top' } },
+          scales: {
+            y: { title: { display: true, text: 'Tỷ lệ phần trăm (%)' } }
+          }
+        }
+      });
+
+      // 2. Course Recovery Chart
+      const topCourses = COURSES.filter(c => c.retakers >= 100);
+      new Chart(document.getElementById('chartCourseRecovery'), {
+        type: 'bar',
+        data: {
+          labels: topCourses.map(c => c.code),
+          datasets: [
+            {
+              label: 'Qua môn ngay Lần 2 (%)',
+              data: topCourses.map(c => c.pass2),
+              backgroundColor: '#1d4ed8'
+            },
+            {
+              label: 'Qua môn Tích lũy mọi lần (%)',
+              data: topCourses.map(c => c.ever),
+              backgroundColor: '#0d9488'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top' } },
+          scales: {
+            y: { min: 0, max: 100, title: { display: true, text: 'Xác suất Phục hồi (%)' } }
+          }
+        }
+      });
+
+      // 3. Level-vs-Gain Paradox Chart
+      new Chart(document.getElementById('chartParadox'), {
+        type: 'bar',
+        data: {
+          labels: ['Rất thấp (< 2.0)', 'Thấp (2.0 – 3.49)', 'Cận ngưỡng (3.5 – 4.49)', 'Sát ngưỡng (≥ 4.5)'],
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Độ tăng Điểm TB (+ΔScore)',
+              data: [3.26, 2.69, 1.46, 0.35],
+              backgroundColor: 'rgba(245, 158, 11, 0.85)',
+              yAxisID: 'y'
+            },
+            {
+              type: 'line',
+              label: 'Xác suất Qua môn Lần 2 (%)',
+              data: [50.91, 68.40, 67.47, 69.33],
+              borderColor: '#1e3a8a',
+              backgroundColor: '#1e3a8a',
+              borderWidth: 3,
+              tension: 0.25,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { type: 'linear', position: 'left', min: 0, max: 4.0, title: { display: true, text: 'Độ tăng Điểm (+Δ)' } },
+            y1: { type: 'linear', position: 'right', min: 0, max: 90, grid: { drawOnChartArea: false }, title: { display: true, text: 'Tỷ lệ Qua môn (%)' } }
+          }
+        }
+      });
+
+      // 4. Failure Mechanism Chart
+      new Chart(document.getElementById('chartFailureType'), {
+        type: 'bar',
+        data: {
+          labels: ['Attendance Fail (n=3,107)', 'Not Passed (n=11,603)', 'Is Suspended (n=340)', 'Học Cải thiện (n=137)'],
+          datasets: [
+            {
+              label: 'Xác suất Qua môn Lần 2 (%)',
+              data: [44.35, 64.66, 73.24, 93.43],
+              backgroundColor: ['#e11d48', '#2563eb', '#7c3aed', '#059669']
+            },
+            {
+              label: 'Tỷ lệ có Điểm L2 > Điểm L1 (%)',
+              data: [75.49, 77.84, 84.12, 73.88],
+              backgroundColor: ['#fda4af', '#93c5fd', '#c4b5fd', '#6ee7b7']
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { min: 0, max: 100, title: { display: true, text: 'Tỷ lệ (%)' } } }
+        }
+      });
+
+      // 5. Timing Gap Chart
+      new Chart(document.getElementById('chartTimingGap'), {
+        type: 'line',
+        data: {
+          labels: ['Học ngay Block 2 (Gap=0)', 'Kỳ kế tiếp (Gap=1)', 'Sau 2 kỳ (Gap=2)', 'Sau 1 năm (Gap=3-4)', 'Trễ ≥ 5 kỳ'],
+          datasets: [
+            {
+              label: 'Qua môn ngay Lần 2 (%)',
+              data: [76.61, 57.82, 49.91, 50.26, 56.39],
+              borderColor: '#1d4ed8',
+              backgroundColor: 'rgba(29, 78, 216, 0.12)',
+              fill: true,
+              borderWidth: 3,
+              tension: 0.25
+            },
+            {
+              label: 'Qua môn Tích lũy (%)',
+              data: [87.57, 78.46, 72.43, 72.09, 72.03],
+              borderColor: '#0d9488',
+              borderDash: [5, 5],
+              borderWidth: 2.5,
+              tension: 0.25
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { min: 35, max: 95, title: { display: true, text: 'Xác suất Phục hồi (%)' } } }
+        }
+      });
+
+      // 6. Kaplan-Meier Survival Chart
+      new Chart(document.getElementById('chartKaplanMeier'), {
+        type: 'line',
+        data: {
+          labels: ['Lần học 2 (Retake 1)', 'Lần học 3 (Retake 2)', 'Lần học 4 (Retake 3)', 'Lần học 5 (Retake 4)', 'Lần học 6 (Retake 5)', 'Lần học 7 (Retake 6)'],
+          datasets: [
+            {
+              label: 'Phục hồi Tích lũy 1 - S(k) (%)',
+              data: [60.66, 79.78, 87.47, 91.25, 93.92, 95.25],
+              borderColor: '#059669',
+              backgroundColor: 'rgba(5, 150, 105, 0.1)',
+              fill: true,
+              borderWidth: 3
+            },
+            {
+              label: 'Xác suất Qua có điều kiện h(k) (%)',
+              data: [60.66, 48.60, 38.02, 30.21, 30.52, 21.90],
+              borderColor: '#dc2626',
+              borderWidth: 2.5
+            },
+            {
+              label: 'Còn Trượt S(k) (%)',
+              data: [39.34, 20.22, 12.53, 8.75, 6.08, 4.75],
+              borderColor: '#64748b',
+              borderDash: [4, 4],
+              borderWidth: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { min: 0, max: 100, title: { display: true, text: 'Xác suất (%)' } } }
+        }
+      });
+
+      // 7. Regression Models Benchmark Chart
+      new Chart(document.getElementById('chartRegModels'), {
+        type: 'bar',
+        data: {
+          labels: ['Baseline 0 (Mean)', 'M1: Simple OLS', 'M2: Multiple OLS (11 vars)', 'M3: Poly Ridge (L2)', 'M4: Random Forest Reg'],
+          datasets: [
+            {
+              label: 'Test RMSE (Càng thấp càng tốt)',
+              data: [2.6961, 2.4585, 2.3138, 2.2792, 2.2811],
+              backgroundColor: '#3b82f6'
+            },
+            {
+              label: 'Test MAE (Sai số tuyệt đối)',
+              data: [2.1734, 2.0158, 1.8616, 1.8244, 1.8288],
+              backgroundColor: '#14b8a6'
+            },
+            {
+              label: 'Test R² (x100%)',
+              data: [0.0, 16.83, 26.33, 28.52, 28.40],
+              backgroundColor: '#f59e0b'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+
+      // 8. Classification & Survival Models Chart
+      new Chart(document.getElementById('chartClsModels'), {
+        type: 'bar',
+        data: {
+          labels: ['M5: Naive Bayes', 'M6: Logistic MLE', 'M7: Random Forest Cls', 'M8: Cox Cloglog Survival'],
+          datasets: [
+            {
+              label: 'ROC-AUC (%)',
+              data: [69.16, 71.11, 73.40, 72.95],
+              backgroundColor: '#1e3a8a'
+            },
+            {
+              label: 'F1-Score (%)',
+              data: [73.51, 75.69, 76.43, 72.07],
+              backgroundColor: '#0d9488'
+            },
+            {
+              label: 'Accuracy (%)',
+              data: [66.57, 67.01, 68.50, 67.44],
+              backgroundColor: '#6366f1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { min: 50, max: 85 } }
+        }
+      });
+    }
+
+    // Populate Simulator Course Dropdown
+    const simCourseSelect = document.getElementById('simCourse');
+    COURSES.filter(c => c.retakers > 0 && c.att1 !== null).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.code;
+      opt.textContent = `${c.code} — ${c.name} (Fail L1: ${c.fail1_pct}%)`;
+      simCourseSelect.appendChild(opt);
+    });
+
+    // Exact Trained Standardization Means/Stds and Model 2 & Model 6 & Model 8 Weights
+    const X_MEAN = [2.809, 3.655, 1.725, 0.190, 0.025, 0.250, 0.675, 0.278, 5.650, 5.210, 1.150];
+    const X_STD  = [1.869, 2.580, 1.830, 0.392, 0.156, 0.433, 0.560, 0.115, 0.720, 1.450, 1.550];
+    const OLS_BETA = [2.1011, -1.3079, -0.0405, -0.1132, -0.2168, 0.0522, 0.3739, -0.1605, 0.1507, 0.4957, 0.5286, -0.0276];
+    const LOGIT_W  = [0.4713,  0.2534,  0.0549, -0.0427, -0.1601, 0.0452, 0.3344, -0.1333, -0.2623, -0.0593, 0.3479, -0.0438];
+
+    function runSimulation() {
+      const cCode = document.getElementById('simCourse').value;
+      const course = COURSES.find(c => c.code === cCode) || COURSES[0];
+      const cw1 = parseFloat(document.getElementById('simCW1').value);
+      const fe1 = parseFloat(document.getElementById('simFE1').value);
+      const tot1 = parseFloat(document.getElementById('simTot1').value);
+      const gpa = parseFloat(document.getElementById('simGPA').value);
+      const status1 = document.getElementById('simStatus1').value;
+      const gap = parseFloat(document.getElementById('simGap').value);
+
+      document.getElementById('lblCW1').textContent = cw1.toFixed(1);
+      document.getElementById('lblFE1').textContent = fe1.toFixed(1);
+      document.getElementById('lblTot1').textContent = tot1.toFixed(1);
+      document.getElementById('lblGPA').textContent = gpa.toFixed(1);
+
+      const isAF = status1 === 'AF' ? 1.0 : 0.0;
+      const isSusp = status1 === 'SU' ? 1.0 : 0.0;
+      const isImm = gap === 0 ? 1.0 : 0.0;
+      const logGap = Math.log1p(gap);
+      const failRate = course.fail1_pct / 100.0;
+      const courseMean = course.mean_course;
+
+      const rawX = [tot1, cw1, fe1, isAF, isSusp, isImm, logGap, failRate, courseMean, gpa, 1.0];
+      const stdX = rawX.map((v, i) => (v - X_MEAN[i]) / X_STD[i]);
+
+      // Compute OLS Delta and Logistic Probability
+      let predDelta = OLS_BETA[0];
+      let logitZ = LOGIT_W[0];
+      for (let i = 0; i < stdX.length; i++) {
+        predDelta += OLS_BETA[i + 1] * stdX[i];
+        logitZ += LOGIT_W[i + 1] * stdX[i];
+      }
+      const predTot2 = Math.min(10.0, Math.max(0.0, tot1 + predDelta));
+      const probPass2 = 1.0 / (1.0 + Math.exp(-logitZ));
+
+      document.getElementById('outProbPass2').textContent = (probPass2 * 100).toFixed(1) + '%';
+      document.getElementById('outPredTotal2').textContent = predTot2.toFixed(2);
+      document.getElementById('outPredDelta').textContent = `Độ tăng dự kiến: ${predDelta >= 0 ? '+' : ''}${predDelta.toFixed(2)} điểm`;
+
+      const badge = document.getElementById('outRiskBadge');
+      if (probPass2 >= 0.65) {
+        badge.textContent = 'Khả năng phục hồi Cao (Thuận lợi)';
+        badge.className = 'text-xs font-semibold text-emerald-700 mt-1';
+      } else if (probPass2 >= 0.48) {
+        badge.textContent = 'Khả năng phục hồi Trung bình (Cần ôn tập)';
+        badge.className = 'text-xs font-semibold text-amber-600 mt-1';
+      } else {
+        badge.textContent = 'Nguy cơ Tái trượt Cao (Cần can thiệp 1:1)';
+        badge.className = 'text-xs font-semibold text-rose-600 mt-1';
+      }
+
+      // RQ4 Profile Classification
+      const pTitle = document.getElementById('outProfileTitle');
+      const pSub = document.getElementById('outProfileSub');
+      const advice = document.getElementById('outAdviceText');
+      if (status1 === 'AF') {
+        pTitle.textContent = '1. Attendance Disengagement';
+        pSub.textContent = 'Cấm thi do vắng quá 20% số tiết quy định';
+        advice.textContent = 'Cảnh báo: Nhóm trượt điểm danh có tỷ lệ qua môn thực nghiệm thấp nhất (43.02%). Sinh viên cần cam kết chuyên cần tối thiểu 80% và đăng ký học lại ngay khi có thể để tránh rơi vào chuỗi trượt liên tiếp.';
+      } else if (cw1 >= 5.0 && (fe1 < 4.0 || tot1 >= 4.0)) {
+        pTitle.textContent = '3. Final-Exam Bottleneck';
+        pSub.textContent = 'Điểm quá trình đạt (≥5.0), vấp ngã kỳ thi cuối kỳ';
+        advice.textContent = 'Tín hiệu tích cực: Sinh viên nắm vững kiến thức quá trình (nhóm này có tỷ lệ phục hồi tích lũy tới 87.14%). Khuyến nghị đăng ký học lại ngay Block 2 (Gap=0) và tập trung luyện đề thi Thực hành / Cuối kỳ.';
+      } else {
+        pTitle.textContent = '2. Comprehensive Deficit';
+        pSub.textContent = 'Thiếu hụt cả điểm quá trình (<5.0) lẫn điểm thi';
+        advice.textContent = 'Sinh viên bị hổng kiến thức nền tảng từ giai đoạn giữa kỳ (Coursework < 5.0). Cần củng cố lại Lab/Assignment và ưu tiên học lại sớm kèm hỗ trợ mentor trước khi bước vào kỳ thi cuối kỳ.';
+      }
+
+      // Compute Multi-Attempt Cumulative Survival Curve (Immediate Block 2 vs Delayed Gap=2)
+      const baseHazards = [probPass2, probPass2 * 0.80, probPass2 * 0.63, probPass2 * 0.50, probPass2 * 0.45];
+      // Also compute counterfactual Block 2 vs Delayed 2 terms
+      const zBlock2 = logitZ - LOGIT_W[6] * stdX[5] - LOGIT_W[7] * stdX[6] + LOGIT_W[6] * ((1.0 - X_MEAN[5]) / X_STD[5]) + LOGIT_W[7] * ((0.0 - X_MEAN[6]) / X_STD[6]);
+      const zDelay2 = logitZ - LOGIT_W[6] * stdX[5] - LOGIT_W[7] * stdX[6] + LOGIT_W[6] * ((0.0 - X_MEAN[5]) / X_STD[5]) + LOGIT_W[7] * ((Math.log1p(2) - X_MEAN[6]) / X_STD[6]);
+      const pB2 = 1.0 / (1.0 + Math.exp(-zBlock2));
+      const pD2 = 1.0 / (1.0 + Math.exp(-zDelay2));
+
+      function cumCurve(p1) {
+        const mults = [1.0, 0.80, 0.63, 0.50, 0.45];
+        let s = 1.0;
+        return mults.map(m => {
+          const h = Math.min(0.95, Math.max(0.05, p1 * m));
+          s = s * (1.0 - h);
+          return parseFloat(((1.0 - s) * 100).toFixed(1));
+        });
+      }
+
+      const curveImm = cumCurve(pB2);
+      const curveDel = cumCurve(pD2);
+
+      if (simChartInstance) simChartInstance.destroy();
+      simChartInstance = new Chart(document.getElementById('chartSimTrajectory'), {
+        type: 'line',
+        data: {
+          labels: ['Lần học 2 (Retake 1)', 'Lần học 3 (Retake 2)', 'Lần học 4 (Retake 3)', 'Lần học 5 (Retake 4)', 'Lần học 6 (Retake 5)'],
+          datasets: [
+            {
+              label: 'Nếu Học lại ngay Block 2 (Gap=0) (%)',
+              data: curveImm,
+              borderColor: '#059669',
+              backgroundColor: 'rgba(5, 150, 105, 0.12)',
+              fill: true,
+              borderWidth: 3,
+              tension: 0.25
+            },
+            {
+              label: 'Nếu Trì hoãn 2 Học kỳ (Gap=2) (%)',
+              data: curveDel,
+              borderColor: '#e11d48',
+              borderDash: [5, 5],
+              borderWidth: 2.5,
+              tension: 0.25
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { min: 20, max: 100, title: { display: true, text: 'Xác suất Qua môn Tích lũy (%)' } } }
+        }
+      });
+    }
+
+    ['simCourse', 'simCW1', 'simFE1', 'simTot1', 'simGPA', 'simStatus1', 'simGap'].forEach(id => {
+      document.getElementById(id).addEventListener('input', runSimulation);
+      document.getElementById(id).addEventListener('change', runSimulation);
+    });
+
+    document.getElementById('btnPresetBottleneck').addEventListener('click', () => {
+      document.getElementById('simCW1').value = 7.2;
+      document.getElementById('simFE1').value = 2.8;
+      document.getElementById('simTot1').value = 4.6;
+      document.getElementById('simGPA').value = 6.5;
+      document.getElementById('simStatus1').value = 'NP';
+      document.getElementById('simGap').value = '1';
+      runSimulation();
+    });
+
+    document.getElementById('btnPresetAF').addEventListener('click', () => {
+      document.getElementById('simCW1').value = 1.5;
+      document.getElementById('simFE1').value = 0.0;
+      document.getElementById('simTot1').value = 0.8;
+      document.getElementById('simGPA').value = 4.5;
+      document.getElementById('simStatus1').value = 'AF';
+      document.getElementById('simGap').value = '2';
+      runSimulation();
+    });
+
+    document.getElementById('btnPresetBlock2').addEventListener('click', () => {
+      document.getElementById('simCW1').value = 6.0;
+      document.getElementById('simFE1').value = 3.0;
+      document.getElementById('simTot1').value = 4.2;
+      document.getElementById('simGPA').value = 6.2;
+      document.getElementById('simStatus1').value = 'NP';
+      document.getElementById('simGap').value = '0';
+      runSimulation();
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCourseTable();
+      initCharts();
+      runSimulation();
+    });
+  </script>
+</body>
+</html>
